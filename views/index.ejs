@@ -1,222 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Management</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Styling untuk menempatkan tombol logout di kanan atas */
-        .logout-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-        }
-    </style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Financial Management</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+	<!-- Chart.js CDN -->
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<style>
+	/* Styling untuk menempatkan tombol logout di kanan atas */
+	.logout-button {
+		position: absolute;
+		top: 20px;
+		right: 20px;
+	}
+	</style>
 </head>
+
 <body>
-    <div class="container mt-4">
-        <div class="position-relative">
-            <!-- Logout Button -->
-            <form action="/logout" method="POST" class="logout-button">
-                <button type="submit" class="btn btn-danger">Logout</button>
-            </form>
-        </div>
+	<div class="container mt-4">
+		<div class="position-relative">
+			<!-- Logout Button -->
+			<form action="/logout" method="POST" class="logout-button">
+				<button type="submit" class="btn btn-danger">Logout</button>
+			</form>
+		</div>
+		<h1>Financial Management</h1>
+		<!-- Formulir -->
+		<div class="row">
+			<div class="col-md-4">
+				<h2>Add Income</h2>
+				<form action="/income" method="POST">
+					<div class="form-group">
+						<label for="amount">Amount:</label>
+						<input type="number" id="amount" name="amount" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="date">Date:</label>
+						<input type="date" id="date" name="date" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="description">Description:</label>
+						<input type="text" id="description" name="description" class="form-control" required>
+					</div>
+					<button type="submit" class="btn btn-primary">Add Income</button>
+				</form>
+			</div>
+			<div class="col-md-4">
+				<h2>Add Expense</h2>
+				<form action="/expenses" method="POST">
+					<div class="form-group">
+						<label for="amount">Amount:</label>
+						<input type="number" id="amount" name="amount" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="date">Date:</label>
+						<input type="date" id="date" name="date" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="description">Description:</label>
+						<input type="text" id="description" name="description" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="category">Category:</label>
+						<input type="text" id="category" name="category" class="form-control" required>
+					</div>
+					<button type="submit" class="btn btn-primary">Add Expense</button>
+				</form>
+			</div>
+			<div class="col-md-4">
+				<h2>Add Savings</h2>
+				<form action="/savings" method="POST">
+					<div class="form-group">
+						<label for="amount">Amount:</label>
+						<input type="number" id="amount" name="amount" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="date">Date:</label>
+						<input type="date" id="date" name="date" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="description">Description:</label>
+						<input type="text" id="description" name="description" class="form-control" required>
+					</div>
+					<button type="submit" class="btn btn-primary">Add Savings</button>
+				</form>
+			</div>
+		</div>
+		<!-- Laporan Keuangan -->
+		<div class="mt-4">
+			<h2>Financial Report</h2>
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th>Type</th>
+						<th>Amount</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+					<tr>
+						<td>Total Income</td>
+						<td><%= totalIncome.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }) %></td>
+					</tr>
+					</tr>
+					<tr>
+						<td>Total Expenses</td>
+						<td><%= totalExpenses.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }) %></td>
+					</tr>
+					<tr>
+						<td>Total Savings</td>
+						<td><%= totalSavings.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }) %></td>
+					</tr>
+					<tr>
+						<td>Balance</td>
+						<td><%= balance.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }) %></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<!-- Grafik -->
+		<div class="mt-4">
+			<h2>Financial Overview</h2>
+			<canvas id="financialChart" width="400" height="200"></canvas>
+			<script>
+			var ctx = document.getElementById('financialChart').getContext('2d');
+			var financialChart = new Chart(ctx, {
+				type: 'bar',
+				data: {
+					labels: ['Total Income', 'Total Expenses', 'Total Savings'],
+					datasets: [{
+						label: 'Amount (Rp)',
+						data: [
+							<%= totalIncome %>,
+							<%= totalExpenses %>,
+							<%= totalSavings %>
+						],
+						backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(75, 192, 192, 0.2)'],
+						borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)', 'rgba(75, 192, 192, 1)'],
+						borderWidth: 1
+					}]
+				},
+				options: {
+					scales: {
+						y: {
+							beginAtZero: true
+						}
+					}
+				}
+			});
+			</script>
+		</div>
+		<div class="mt-4 m-5">
+			<h2>Download Financial Report</h2>
+			<form action="/download-report" method="GET">
+				<div class="form-group">
+					<label for="month">Month:</label>
+					<select id="month" name="month" class="form-control" required>
+						<option value="1">January</option>
+						<option value="2">February</option>
+						<option value="3">March</option>
+						<option value="4">April</option>
+						<option value="5">May</option>
+						<option value="6">June</option>
+						<option value="7">July</option>
+						<option value="8">August</option>
+						<option value="9">September</option>
+						<option value="10">October</option>
+						<option value="11">November</option>
+						<option value="12">December</option>
+					</select>
+				</div>
+				<div class="form-group">
+					<label for="year">Year:</label>
+					<input type="number" id="year" name="year" class="form-control" value="<%= new Date().getFullYear() %>" required>
+				</div>
+				<button type="submit" class="btn btn-success">Download Report</button>
+			</form>
+		</div>
+	</div>
+	<script>
+	console.log('Rendering index with:', {
+		totalIncome,
+		totalExpenses,
+		totalSavings,
+		balance
+	});
 
-        <h1>Financial Management</h1>
-
-        <!-- Formulir -->
-        <div class="row">
-            <div class="col-md-4">
-                <h2>Add Income</h2>
-                <form action="/income" method="POST">
-                    <div class="form-group">
-                        <label for="amount">Amount:</label>
-                        <input type="number" id="amount" name="amount" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="date">Date:</label>
-                        <input type="date" id="date" name="date" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Description:</label>
-                        <input type="text" id="description" name="description" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add Income</button>
-                </form>
-            </div>
-            <div class="col-md-4">
-                <h2>Add Expense</h2>
-                <form action="/expenses" method="POST">
-                    <div class="form-group">
-                        <label for="amount">Amount:</label>
-                        <input type="number" id="amount" name="amount" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="date">Date:</label>
-                        <input type="date" id="date" name="date" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Description:</label>
-                        <input type="text" id="description" name="description" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="category">Category:</label>
-                        <input type="text" id="category" name="category" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add Expense</button>
-                </form>
-            </div>
-            <div class="col-md-4">
-                <h2>Add Savings</h2>
-                <form action="/savings" method="POST">
-                    <div class="form-group">
-                        <label for="amount">Amount:</label>
-                        <input type="number" id="amount" name="amount" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="date">Date:</label>
-                        <input type="date" id="date" name="date" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Description:</label>
-                        <input type="text" id="description" name="description" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add Savings</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Laporan Keuangan -->
-        <div class="mt-4">
-            <h2>Financial Report</h2>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Total Income</td>
-                        <td id="totalIncome"></td>
-                    </tr>
-                    <tr>
-                        <td>Total Expenses</td>
-                        <td id="totalExpenses"></td>
-                    </tr>
-                    <tr>
-                        <td>Total Savings</td>
-                        <td id="totalSavings"></td>
-                    </tr>
-                    <tr>
-                        <td>Balance</td>
-                        <td id="balance"></td>
-                    </tr>
-                </tbody>                
-            </table>
-        </div>
-
-        <!-- Grafik -->
-        <div class="mt-4">
-            <h2>Financial Overview</h2>
-            <canvas id="financialChart" width="400" height="200"></canvas>
-            <script>
-                var ctx = document.getElementById('financialChart').getContext('2d');
-                var financialChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Total Income', 'Total Expenses', 'Total Savings'],
-                        datasets: [{
-                            label: 'Amount (Rp)',
-                            data: [
-                                <%= totalIncome %>, 
-                                <%= totalExpenses %>, 
-                                <%= totalSavings %>
-                            ],
-                            backgroundColor: [
-                                'rgba(54, 162, 235, 0.2)',
-                                'rgba(255, 99, 132, 0.2)',
-                                'rgba(75, 192, 192, 0.2)'
-                            ],
-                            borderColor: [
-                                'rgba(54, 162, 235, 1)',
-                                'rgba(255, 99, 132, 1)',
-                                'rgba(75, 192, 192, 1)'
-                            ],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            </script>
-            
-        </div>
-
-        <div class="mt-4 m-5">
-            <h2>Download Financial Report</h2>
-            <form action="/download-report" method="GET">
-                <div class="form-group">
-                    <label for="month">Month:</label>
-                    <select id="month" name="month" class="form-control" required>
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="year">Year:</label>
-                    <input type="number" id="year" name="year" class="form-control" value="<%= new Date().getFullYear() %>" required>
-                </div>
-                <button type="submit" class="btn btn-success">Download Report</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Formulir untuk memilih bulan dan tahun -->
-
-    <script>
-    function formatCurrency(amount) {
-        return 'Rp ' + amount.toLocaleString('id-ID');
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        // Ambil data dari EJS dan format
-        const totalIncome = <%= totalIncome %>;
-        const totalExpenses = <%= totalExpenses %>;
-        const totalSavings = <%= totalSavings %>;
-        const balance = <%= balance %>;
-
-        // Update elemen HTML
-        document.getElementById('totalIncome').innerText = formatCurrency(totalIncome);
-        document.getElementById('totalExpenses').innerText = formatCurrency(totalExpenses);
-        document.getElementById('totalSavings').innerText = formatCurrency(totalSavings);
-        document.getElementById('balance').innerText = formatCurrency(balance);
-    });
-</script>
-
-    
-    <!-- Bootstrap JS CDN -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+	function formatCurrency(amount) {
+		return 'Rp ' + amount.toLocaleString('id-ID');
+	}
+	document.addEventListener('DOMContentLoaded', () => {
+		// Ambil data dari EJS dan format
+		const totalIncome = <%= totalIncome %>;
+		const totalExpenses = <%= totalExpenses %>;
+		const totalSavings = <%= totalSavings %>;
+		const balance = <%= balance %>;
+		// Update elemen HTML
+		document.getElementById('totalIncome').innerText = formatCurrency(totalIncome);
+		document.getElementById('totalExpenses').innerText = formatCurrency(totalExpenses);
+		document.getElementById('totalSavings').innerText = formatCurrency(totalSavings);
+		document.getElementById('balance').innerText = formatCurrency(balance);
+	});
+	</script>
+	<!-- Bootstrap JS CDN -->
+	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>
