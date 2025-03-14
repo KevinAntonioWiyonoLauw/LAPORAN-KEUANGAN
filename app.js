@@ -175,42 +175,46 @@ app.get('/download-report', isAuthenticated, (req, res) => {
 
 // Fungsi untuk memindahkan dan mereset data pengeluaran
 const updateMonthlyExpenses = () => {
-	const now = new Date();
-	const month = now.getMonth() + 1;
-	const year = now.getFullYear();
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
 
-	const moveExpensesQuery = `
-        INSERT INTO monthly_expenses (month, year, amount)
-        SELECT MONTH(date) AS month, YEAR(date) AS year, SUM(amount) AS amount
+    const moveExpensesQuery = `
+        INSERT INTO monthly_expenses (user_id, month, year, amount)
+        SELECT user_id, MONTH(date), YEAR(date), SUM(amount)
         FROM expenses
         WHERE MONTH(date) = ? AND YEAR(date) = ?
-        GROUP BY MONTH(date), YEAR(date)
+        GROUP BY user_id, MONTH(date), YEAR(date)
     `;
 
-	const resetExpensesQuery = 'DELETE FROM expenses WHERE MONTH(date) = ? AND YEAR(date) = ?';
+    connection.query(moveExpensesQuery, [month, year], (err, results) => {
+        if (err) {
+            console.error('Error moving expenses data:', err);
+            return;
+        }
+        console.log('Expenses data moved to monthly_expenses:', results); // Log hasil insert
 
-	connection.query(moveExpensesQuery, [month, year], (err) => {
-		if (err) {
-			console.error('Error moving expenses data:', err);
-			return;
-		}
-
-		connection.query(resetExpensesQuery, [month, year], (err) => {
-			if (err) {
-				console.error('Error resetting expenses data:', err);
-			} else {
-				console.log('Monthly expenses data updated successfully.');
-			}
-		});
-	});
+        // Jalankan penghapusan setelah data berhasil dipindahkan
+        const resetExpensesQuery = 'DELETE FROM expenses WHERE MONTH(date) = ? AND YEAR(date) = ?';
+        connection.query(resetExpensesQuery, [month, year], (err) => {
+            if (err) {
+                console.error('Error resetting expenses data:', err);
+            } else {
+                console.log('Expenses data reset successfully.');
+            }
+        });
+    });
 };
 
-const updateMonthlyIncome = () => {
-	const now = new Date();
-	const month = now.getMonth() + 1;
-	const year = now.getFullYear();
 
-	const moveIncomeQuery = `
+
+
+const updateMonthlyIncome = () => {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
+    const moveIncomeQuery = `
         INSERT INTO monthly_income (user_id, month, year, total_income)
         SELECT user_id, MONTH(date), YEAR(date), SUM(amount)
         FROM income
@@ -218,55 +222,94 @@ const updateMonthlyIncome = () => {
         GROUP BY user_id
     `;
 
-	const resetIncomeQuery = 'DELETE FROM income WHERE MONTH(date) = ? AND YEAR(date) = ?';
+    console.log(`Executing moveIncomeQuery for month: ${month}, year: ${year}`); // Log untuk debugging
 
-	connection.query(moveIncomeQuery, [month, year], (err) => {
-		if (err) {
-			console.error('Error moving income data:', err);
-			return;
-		}
+    connection.query(moveIncomeQuery, [month, year], (err, results) => {
+        if (err) {
+            console.error('Error moving income data:', err);
+            return;
+        }
 
-		connection.query(resetIncomeQuery, [month, year], (err) => {
-			if (err) {
-				console.error('Error resetting income data:', err);
-			} else {
-				console.log('Monthly income data updated successfully.');
-			}
-		});
-	});
+        console.log('Income data moved:', results); // Log hasil query moveIncomeQuery
+
+        connection.query('SELECT * FROM monthly_income WHERE month = ? AND year = ?', [month, year], (err, results) => {
+            if (err) {
+                console.error('Error fetching moved income data:', err);
+            } else {
+                console.log('Moved income data:', results); // Log data yang berhasil dipindahkan
+            }
+        });
+
+        const resetIncomeQuery = 'DELETE FROM income WHERE MONTH(date) = ? AND YEAR(date) = ?';
+        console.log('Executing resetIncomeQuery'); // Log sebelum reset income
+
+        connection.query(resetIncomeQuery, [month, year], (err) => {
+            if (err) {
+                console.error('Error resetting income data:', err);
+            } else {
+                console.log('Income data reset successfully.'); // Log setelah reset berhasil
+            }
+        });
+    });
 };
 
 
-// Fungsi untuk memindahkan dan mereset data tabungan
 const updateMonthlyData = () => {
-	const now = new Date();
-	const month = now.getMonth() + 1;
-	const year = now.getFullYear();
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
 
-	const moveSavingsQuery = `
-        INSERT INTO monthly_savings (month, year, amount)
-        SELECT MONTH(date) AS month, YEAR(date) AS year, SUM(amount) AS amount
-        FROM savings
+    const moveIncomeQuery = `
+        INSERT INTO monthly_income (user_id, month, year, total_income)
+        SELECT user_id, ?, ?, SUM(amount)
+        FROM income
+        WHERE MONTH(date) = ? AND YEAR(date) = ?
+        GROUP BY user_id
+    `;
+
+    connection.query(moveIncomeQuery, [month, year, month, year], (err, results) => {
+        if (err) {
+            console.error('Error inserting income data:', err);
+            return;
+        }
+        console.log('Income data moved to monthly_income:', results); // Log hasil insert
+
+        // Jalankan penghapusan setelah data berhasil dipindahkan
+        const resetIncomeQuery = 'DELETE FROM income WHERE MONTH(date) = ? AND YEAR(date) = ?';
+        connection.query(resetIncomeQuery, [month, year], (err) => {
+            if (err) {
+                console.error('Error resetting income data:', err);
+            } else {
+                console.log('Income data reset successfully.');
+            }
+        });
+    });
+
+    const moveExpensesQuery = `
+        INSERT INTO monthly_expenses (month, year, total_expenses)
+        SELECT MONTH(date), YEAR(date), SUM(amount)
+        FROM expenses
         WHERE MONTH(date) = ? AND YEAR(date) = ?
         GROUP BY MONTH(date), YEAR(date)
     `;
 
-	const resetSavingsQuery = 'DELETE FROM savings WHERE MONTH(date) = ? AND YEAR(date) = ?';
+    connection.query(moveExpensesQuery, [month, year], (err, results) => {
+        if (err) {
+            console.error('Error inserting expenses data:', err);
+            return;
+        }
+        console.log('Expenses data moved to monthly_expenses:', results); // Log hasil insert
 
-	connection.query(moveSavingsQuery, [month, year], (err) => {
-		if (err) {
-			console.error('Error moving savings data:', err);
-			return;
-		}
-
-		connection.query(resetSavingsQuery, [month, year], (err) => {
-			if (err) {
-				console.error('Error resetting savings data:', err);
-			} else {
-				console.log('Monthly savings data updated successfully.');
-			}
-		});
-	});
+        // Jalankan penghapusan setelah data berhasil dipindahkan
+        const resetExpensesQuery = 'DELETE FROM expenses WHERE MONTH(date) = ? AND YEAR(date) = ?';
+        connection.query(resetExpensesQuery, [month, year], (err) => {
+            if (err) {
+                console.error('Error resetting expenses data:', err);
+            } else {
+                console.log('Expenses data reset successfully.');
+            }
+        });
+    });
 };
 
 
@@ -326,45 +369,55 @@ function isAuthenticated(req, res, next) {
 
 // Rute untuk menampilkan halaman utama
 app.get('/', isAuthenticated, (req, res) => {
-	const userId = req.session.userId;
+    const userId = req.session.userId;
 
-	const incomeQuery = 'SELECT SUM(amount) AS total_income FROM income WHERE user_id = ?';
-	const expensesQuery = 'SELECT SUM(amount) AS total_expenses FROM expenses WHERE user_id = ?';
-	const savingsQuery = 'SELECT SUM(amount) AS total_savings FROM savings WHERE user_id = ?';
+    const monthlyBalanceQuery = 'SELECT SUM(balance) AS total_balance FROM monthly_balance WHERE user_id = ?';
+    const currentIncomeQuery = 'SELECT SUM(amount) AS total_income FROM income WHERE user_id = ?';
+    const currentExpensesQuery = 'SELECT SUM(amount) AS total_expenses FROM expenses WHERE user_id = ?';
+    const savingsQuery = 'SELECT SUM(amount) AS total_savings FROM savings WHERE user_id = ?';
 
-	connection.query(incomeQuery, [userId], (err, incomeResults) => {
-		if (err) {
-			console.error('Error fetching income data:', err);
-			return res.status(500).send('Error fetching income data');
-		}
+    connection.query(monthlyBalanceQuery, [userId], (err, balanceResults) => {
+        if (err) {
+            console.error('Error fetching balance data:', err);
+            return res.status(500).send('Error fetching balance data');
+        }
 
-		connection.query(expensesQuery, [userId], (err, expensesResults) => {
-			if (err) {
-				console.error('Error fetching expenses data:', err);
-				return res.status(500).send('Error fetching expenses data');
-			}
+        connection.query(currentIncomeQuery, [userId], (err, incomeResults) => {
+            if (err) {
+                console.error('Error fetching income data:', err);
+                return res.status(500).send('Error fetching income data');
+            }
 
-			connection.query(savingsQuery, [userId], (err, savingsResults) => {
-				if (err) {
-					console.error('Error fetching savings data:', err);
-					return res.status(500).send('Error fetching savings data');
-				}
+            connection.query(currentExpensesQuery, [userId], (err, expensesResults) => {
+                if (err) {
+                    console.error('Error fetching expenses data:', err);
+                    return res.status(500).send('Error fetching expenses data');
+                }
 
-				const totalIncome = incomeResults[0].total_income || 0;
-				const totalExpenses = expensesResults[0].total_expenses || 0;
-				const totalSavings = savingsResults[0].total_savings || 0;
-				const balance = totalIncome - totalExpenses - totalSavings;
+                connection.query(savingsQuery, [userId], (err, savingsResults) => {
+                    if (err) {
+                        console.error('Error fetching savings data:', err);
+                        return res.status(500).send('Error fetching savings data');
+                    }
 
-				res.render('index', {
-					totalIncome,
-					totalExpenses,
-					totalSavings,
-					balance
-				});
-			});
-		});
-	});
+                    const previousBalance = balanceResults[0].total_balance || 0;
+                    const totalIncome = incomeResults[0].total_income || 0;
+                    const totalExpenses = expensesResults[0].total_expenses || 0;
+                    const totalSavings = savingsResults[0].total_savings || 0;
+                    const balance = previousBalance + (totalIncome - totalExpenses - totalSavings);
+
+                    res.render('index', {
+                        totalIncome,
+                        totalExpenses,
+                        totalSavings,
+                        balance
+                    });
+                });
+            });
+        });
+    });
 });
+
 
 
 // Rute untuk menambahkan pemasukan
@@ -428,6 +481,11 @@ app.post('/savings', isAuthenticated, (req, res) => {
 	});
 });
 
+app.get('/test-reset', (req, res) => {
+    updateMonthlyData();
+    res.send('Monthly reset triggered!');
+});
+
 
 // Rute untuk mendapatkan laporan keuangan
 app.get('/report', isAuthenticated, (req, res) => {
@@ -480,10 +538,12 @@ cron.schedule('0 0 1 * *', () => {
 	updateMonthlyExpenses();
 });
 
-// Menjadwalkan tugas untuk menjalankan updateMonthlyData pada awal bulan
+// Menjadwalkan tugas untuk menjalankan reset bulanan pada tanggal 1 setiap bulan
 cron.schedule('0 0 1 * *', () => {
-	updateMonthlyData();
+    updateMonthlyData();
 });
+
+
 
 cron.schedule('0 0 1 * *', () => {
 	updateMonthlyIncome();
