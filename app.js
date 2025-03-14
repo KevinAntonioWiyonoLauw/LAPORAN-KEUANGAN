@@ -21,7 +21,7 @@ const saltRounds = 10; // Jumlah putaran untuk enkripsi password
 
 // Middleware untuk menangani sesi
 app.use(session({
-	secret: 'Session123', // Ganti dengan secret yang lebih kuat
+	secret: process.env.SECRET_KEY, // Ganti dengan secret yang lebih kuat
 	resave: false,
 	saveUninitialized: true,
 	cookie: {
